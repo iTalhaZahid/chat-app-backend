@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
+
+import { registerUserEvents } from './userEvents';
 dotenv.config();
 
 export default function initializeSocketServer(server) {
@@ -18,8 +20,6 @@ export default function initializeSocketServer(server) {
         const token = socket.handshake.auth.token;
         if (!token) {
             return next(new Error('Authentication error: No token provided'));
-        } else {
-            next(new Error('Authentication error'));
         }
 
         jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
@@ -38,11 +38,17 @@ export default function initializeSocketServer(server) {
     //handle socket connection
     io.on('connection', (socket) => {
         console.log(`User connected: ${socket.data.userId}`);
+       
+        //register user events
+        registerUserEvents(io, socket);
+
+        //handle socket disconnection
+        socket.on('disconnect', () => {
+            console.log(`User disconnected: ${socket.data.userId}`);
+        });
     });
 
-    //handle socket disconnection
-    io.on('disconnect', (socket) => {
-        console.log(`User disconnected: ${socket.data.userId}`);
-    });
+
+
     return io;
 }

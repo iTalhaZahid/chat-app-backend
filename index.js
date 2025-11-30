@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
+import initializeSocketServer from "./socket/socket.js";
 
 dotenv.config();
 const app = express();
@@ -24,7 +25,10 @@ const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 
 
+//listen to socket events
+initializeSocketServer(server);
 
+//database Connection and server start
 connectDB().then(() => {
     console.log("Connected to MongoDB");
     server.listen(PORT, () => {
