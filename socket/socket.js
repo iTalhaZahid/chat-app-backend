@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 
-import { registerUserEvents } from './userEvents';
+import { registerUserEvents } from './userEvents.js';
 dotenv.config();
 
 export default function initializeSocketServer(server) {
