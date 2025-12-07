@@ -1,5 +1,4 @@
-// import { Server as SocketIOServer, Socket } from 'socket.io';
-import e from 'cors';
+
 import User from '../models/User.js';
 import { generateToken } from '../utils/token.js';
 
@@ -50,7 +49,7 @@ export function registerUserEvents(io, socket) {
     socket.on("getContacts"), async () => {
         try {
             //Check authenticated user
-            
+
             const currentUserId = socket.data.userId;
             if (!currentUserId) {
                 return socket.emit('getContacts', {
