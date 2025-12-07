@@ -4,6 +4,49 @@ import Conversation from '../models/Conversation.js';
 export function registerChatEvents(io, socket) {
     // Implement chat-related socket events here
 
+
+    //Fetch Conversations
+    socket.on("getConversations", async () => {
+        console.log("Fetch Conversation event");
+        try {
+            const userId = socket.data.userId;
+            if (!userId) {
+                socket.emit('getConversations', {
+                    success: false,
+                    msg: "Unauthorized"
+                });
+                return;
+            }
+
+            // Fetch conversations where the user is a participant
+            const conversations = await Conversation.find({
+                participants: userId
+            }).sort({ updatedAt: -1 }) // Sort by last updated
+                .populate({
+                    path: 'lastMessage',
+                    select: "content senderId attachment createdAt",
+                })
+                .populate({
+                    path: 'participants',
+                    select: 'name avatar email'
+                }).lean();
+
+            socket.emit('getConversations', {
+                success: true,
+                data: conversations
+            });
+        } catch (error) {
+            console.log("Fetch Conversation", error);
+            socket.emit('getConversations', {
+                success: false,
+                msg: error?.message || "Error fetching conversations"
+            });
+        }
+    });
+
+
+    //New Conversation 
+
     socket.on("newConversation", async (data) => {
         // Handle new conversation logic here
         console.log(`new conversation with data:`, data);
@@ -35,7 +78,7 @@ export function registerChatEvents(io, socket) {
                 type: data.type,
                 participants: data.participants,
                 name: data.name || "",     //can be empty for direct
-                avatar: data.avatar || "", 
+                avatar: data.avatar || "",
                 createdBy: socket.data.userId
             });
 
