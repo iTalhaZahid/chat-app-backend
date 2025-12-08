@@ -41,7 +41,7 @@ const ConversationSchema = new Schema({
 // Middleware to update 'updatedAt' before saving
 ConversationSchema.pre('save', function (next) {
     this.updatedAt = Date.now();
-    next();
+    // next();
 });
 
 export default  model("Conversation", ConversationSchema);
