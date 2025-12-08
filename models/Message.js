@@ -3,20 +3,18 @@ const { Schema, model } = mongoose;
 
 const messageSchema = new Schema(
     {
-        conversationID: {
+        conversationId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Conversation",
             required: true
         },
-        senderID: {
+        senderId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true
         },
-        content: {
-            type: String,
-            attachment: String,
-        }
+        content: String,
+        attachment: String,
     },
     { timestamps: true }
 );
