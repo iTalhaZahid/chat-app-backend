@@ -1,49 +1,9 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import Conversation from '../models/Conversation.js';
+import Message from '../models/Message.js';
 
 export function registerChatEvents(io, socket) {
     // Implement chat-related socket events here
-
-
-    //Fetch Conversations
-    socket.on("getConversations", async () => {
-        console.log("Fetch Conversation event");
-        try {
-            const userId = socket.data.userId;
-            if (!userId) {
-                socket.emit('getConversations', {
-                    success: false,
-                    msg: "Unauthorized"
-                });
-                return;
-            }
-
-            // Fetch conversations where the user is a participant
-            const conversations = await Conversation.find({
-                participants: userId
-            }).sort({ updatedAt: -1 }) // Sort by last updated
-                .populate({
-                    path: 'lastMessage',
-                    select: "content senderId attachment createdAt",
-                })
-                .populate({
-                    path: 'participants',
-                    select: 'name avatar email'
-                }).lean();
-
-            socket.emit('getConversations', {
-                success: true,
-                data: conversations
-            });
-        } catch (error) {
-            console.log("Fetch Conversation", error);
-            socket.emit('getConversations', {
-                success: false,
-                msg: error?.message || "Error fetching conversations"
-            });
-        }
-    });
-
 
     //New Conversation 
 
@@ -74,6 +34,7 @@ export function registerChatEvents(io, socket) {
 
             //DONE: Create new conversation
 
+            //create new conversation document
             const conversation = await Conversation.create({
                 type: data.type,
                 participants: data.participants,
@@ -117,5 +78,145 @@ export function registerChatEvents(io, socket) {
                 msg: error?.message || "Error creating new conversation"
             });
         }
-    })
+    });
+
+    //Fetch Conversations
+    socket.on("getConversations", async () => {
+        console.log("Fetch Conversation event");
+        try {
+            const userId = socket.data.userId;
+            if (!userId) {
+                socket.emit('getConversations', {
+                    success: false,
+                    msg: "Unauthorized"
+                });
+                return;
+            }
+
+            // Fetch conversations where the user is a participant
+            const conversations = await Conversation.find({
+                participants: userId
+            }).sort({ updatedAt: -1 }) // Sort by last updated
+                .populate({
+                    path: 'lastMessage',
+                    select: "content senderId attachment createdAt",
+                })
+                .populate({
+                    path: 'participants',
+                    select: 'name avatar email'
+                }).lean();
+
+            socket.emit('getConversations', {
+                success: true,
+                data: conversations
+            });
+        } catch (error) {
+            console.log("Fetch Conversation", error);
+            socket.emit('getConversations', {
+                success: false,
+                msg: error?.message || "Error fetching conversations"
+            });
+        }
+    });
+
+
+
+
+
+    socket.on("newMessage", async (data) => {
+        // Handle new message logic here
+        // const senderId = socket.data.userId;          // sender from auth
+        // const conversationId = data.conversationId;   // from client
+
+        try {
+            const message = await Message.create({
+                conversationId: data.conversationId,
+                // senderId: senderId.toString(),
+                senderId: data.sender.id,
+                content: data.content,
+                attachment: data.attachment
+            });
+            // io.to(data.conversationId.toString()).emit("newMessage", {
+            //     success: true,
+            //     data: {
+            //         id: message._id,
+            //         content: data.content,
+            //         sender: {
+            //             id: senderId.toString(),
+            //             name: data.sender.name,
+            //             avatar: data.sender.avatar
+            //         }
+            //     },
+            //     attachment: data.attachment,
+            //     createdAt: new Date().toISOString(),
+            //     conversationId,
+            // });
+
+            io.to(data.conversationId.toString()).emit("newMessage", {
+                success: true,
+                data: {
+                    id: message._id,
+                    content: data.content,
+                    sender: {
+                        id: data.sender.id,
+                        name: data.sender.name,
+                        avatar: data.sender.avatar,
+                    },
+                    attachment: data.attachment,
+                    createdAt: new Date().toISOString(),
+                    conversationId: data.conversationId,
+                },
+            });
+
+
+            //Update last message in conversation
+            await Conversation.findByIdAndUpdate(data.conversationId, {
+                lastMessage: message._id,
+            });
+
+        } catch (error) {
+            console.log("New Message Error", error);
+            socket.emit("newMessage", {
+                success: false,
+                msg: error?.message || "Failed to send message"
+            });
+        }
+    });
+
+
+    socket.on("getMessages", async (data) => {
+        // Handle new message logic here
+        // const senderId = socket.data.userId;          // sender from auth
+        // const conversationId = data.conversationId;   // from client
+
+        try {
+            const messages = await Message.find({ conversationId: data.conversationId })
+                .sort({ createdAt: -1 }) // Sort by creation time descending
+                .populate({
+                    path: 'senderId',
+                    select: 'name avatar '
+                }).lean();
+
+            const messagesWithSender = messages.map(message => ({
+                ...message,
+                id: message._id,
+                sender: {
+                    id: message.senderId._id,
+                    name: message.senderId.name,
+                    avatar: message.senderId.avatar
+                }
+            }))
+
+            socket.emit("getMessages", {
+                success: true,
+                data: messagesWithSender,
+            });
+        } catch (error) {
+            console.log("getMessages Message Error", error);
+            socket.emit("getMessages", {
+                success: false,
+                msg: error?.message || "Failed to fetch message"
+            });
+        }
+    });
 }
