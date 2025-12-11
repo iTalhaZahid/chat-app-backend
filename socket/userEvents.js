@@ -45,17 +45,18 @@ export function registerUserEvents(io, socket) {
             });
         }
     });
-
-    socket.on("getContacts"), async () => {
+ 
+    socket.on("getContacts", async () => {
         try {
             //Check authenticated user
 
             const currentUserId = socket.data.userId;
             if (!currentUserId) {
-                return socket.emit('getContacts', {
+                socket.emit('getContacts', {
                     success: false,
                     message: 'User not authenticated'
                 });
+                return;
             }
             // Fetch all users except the current user
 
@@ -63,6 +64,7 @@ export function registerUserEvents(io, socket) {
                 { _id: { $ne: currentUserId } },
                 { password: 0 } //exclude password field
             ).lean();      //lean() to get plain JS objects instead of Mongoose documents
+            
             const contacts = users.map((user) => ({
                 id: user._id.toString(),
                 name: user.name,
@@ -70,7 +72,7 @@ export function registerUserEvents(io, socket) {
                 avatar: user.avatar || "",
             }));
 
-            return socket.emit('getContacts', {
+            socket.emit('getContacts', {
                 success: true,
                 data: contacts
             });
@@ -82,6 +84,6 @@ export function registerUserEvents(io, socket) {
                 message: error?.message || 'Error fetching contacts'
             });
         }
-    }
+    });
 
 }
