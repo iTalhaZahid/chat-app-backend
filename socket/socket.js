@@ -11,7 +11,10 @@ export default function initializeSocketServer(server) {
     //socket io instance
     const io = new SocketIOServer(server, {
         cors: {
-            origin: '*', // Allow all origins (you can restrict this in production)
+            origin: [
+                'https://chatx-chi.vercel.app/',
+                'http://localhost:3000',
+            ], // Allow all origins (you can restrict this in production)
             methods: ['GET', 'POST']
         }
     });
@@ -39,7 +42,7 @@ export default function initializeSocketServer(server) {
 
     //handle socket connection
     io.on('connection', async (socket) => {
-        const userId = socket.data.userId; 
+        const userId = socket.data.userId;
         console.log(`User connected: ${socket.data.userId}`);
 
         //register user events
