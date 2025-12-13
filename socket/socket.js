@@ -39,12 +39,12 @@ export default function initializeSocketServer(server) {
 
     //handle socket connection
     io.on('connection', async (socket) => {
+        const userId = socket.data.userId; 
         console.log(`User connected: ${socket.data.userId}`);
 
         //register user events
         registerUserEvents(io, socket);
         registerChatEvents(io, socket);
-
 
         //join all the conversation rooms of the user
         try {
