@@ -1,5 +1,6 @@
 import { create } from "domain";
-import { Schema,model } from "mongoose";
+import { Schema, model } from "mongoose";
+import { type } from "os";
 
 const UserSchema = new Schema({
     email: {
@@ -20,6 +21,13 @@ const UserSchema = new Schema({
     name: {
         type: String,
         required: true
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    verificationCode: {
+        type: String,
     },
     createdAt: {
         type: Date,
