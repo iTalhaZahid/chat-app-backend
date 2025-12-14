@@ -6,7 +6,7 @@ import { sendResetPasswordEmail, sendVerificationEmail, sendWelcomeEmail } from 
 
 
 const OTP_EXP_MINUTES = 1;
-const RESET_TOKEN_EXP_MINUTES = 1;
+const RESET_TOKEN_EXP_MINUTES = 5;
 
 export const registerUser = async (req, res) => {
     // Registration logic will go here
@@ -110,7 +110,7 @@ export const verifyEmail = async (req, res) => {
         //gen token (JWT) logic will go here
         const token = generateToken(user);
         await sendWelcomeEmail(user.name, email);
-        res.status(200).json({ success: true, message: "Email verified successfully" });
+        res.status(200).json({ success: true, message: "Email verified successfully",token: token });
     } catch (error) {
         console.log("Error Verifiying Code:", error)
         res.status(500).json({ success: false, message: "Server Error" });
