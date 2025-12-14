@@ -33,6 +33,9 @@ const UserSchema = new Schema({
         type: Date,
         default: Date.now,
     },
+    resetPasswordToken: { type: String },
+    resetPasswordTokenExpiresAt: { type: Date },
+    verificationCodeExpiresAt: { type: Date },
 });
 
 export default model("User", UserSchema);
