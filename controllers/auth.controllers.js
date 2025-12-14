@@ -47,7 +47,7 @@ export const registerUser = async (req, res) => {
         await sendVerificationEmail(email, verificationCode);
 
         //gen token (JWT) logic will go here
-        // const token = generateToken(user);
+        const token = generateToken(user);
 
         res.status(201).json({ success: true, message: "User registered successfully. Please verify your email." });
 
