@@ -49,7 +49,7 @@ export const registerUser = async (req, res) => {
         //gen token (JWT) logic will go here
         // const token = generateToken(user);
 
-        res.status(201).json({ success: true, message: "User registered successfully. Please verify your email." });
+        res.status(201).json({ success: true, message: "User registered successfully." });
 
     } catch (error) {
         console.log('error:', error);
@@ -107,6 +107,8 @@ export const verifyEmail = async (req, res) => {
         user.verificationCode = undefined;
         user.verificationCodeExpiresAt = undefined;
         await user.save();
+        //gen token (JWT) logic will go here
+        const token = generateToken(user);
         await sendWelcomeEmail(user.name, email);
         res.status(200).json({ success: true, message: "Email verified successfully" });
     } catch (error) {
