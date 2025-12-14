@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/token.js";
+import { sendVerificationEmail, sendWelcomeEmail } from "../middlewares/email.js";
 
 
 export const registerUser = async (req, res) => {
@@ -9,16 +10,18 @@ export const registerUser = async (req, res) => {
     const { email, password, name, avatar } = req.body;
     try {
         let user = await User.findOne({ email });
-        if (user) {
+        if (user && user.isVerified) {
             return res.status(400).json({ success: false, message: "User already exists" });
-            return;
         }
+        //Create OTP CODE
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         //create new user
         user = new User({
             email,
             password,
             name,
-            avatar: avatar || ""
+            avatar: avatar || "",
+            verificationCode
         });
 
         //hash the password before saving to database
@@ -26,6 +29,7 @@ export const registerUser = async (req, res) => {
         user.password = await bcrypt.hash(password, salt);
         //save the user to database
         await user.save();
+        sendVerificationEmail(email, verificationCode);
 
         //gen token (JWT) logic will go here
         const token = generateToken(user);
@@ -62,5 +66,26 @@ export const loginUser = async (req, res) => {
     } catch (error) {
         console.log('error:', error);
         res.status(500).json({ success: false, message: "Server Error" });
+    }
+}
+
+export const verifyEmail = async (req, res) => {
+    try {
+        const { email, verificationCode } = req.body;
+
+        //find user by email
+        const user = await User.findOne({
+            email, verificationCode
+        })
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Invalid verification code or email" });
+        }
+        user.isVerified = true;
+        user.verificationCode = undefined;
+        await user.save();
+        await sendWelcomeEmail(user.name, email);
+        res.status(200).json({ success: true, message: "Email verified successfully" });
+    } catch (error) {
+        console.log("Error Verifiying Code:",error)
     }
 }
